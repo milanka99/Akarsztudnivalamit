@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>💌 Akarsz tudni valamit?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Quicksand', 'Segoe UI', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    transition: opacity .9s ease;
+  }
+  .hidden { opacity: 0; pointer-events: none; }
+
+  /* ---------- Question screen ---------- */
+  #question {
+    background: linear-gradient(135deg, #fff0f6 0%, #ffe1ec 50%, #ffd6e7 100%);
+  }
+  .card {
+    background: #fff;
+    padding: 48px 44px 44px;
+    border-radius: 32px;
+    box-shadow: 0 24px 70px rgba(255, 92, 147, .28);
+    text-align: center;
+    max-width: 92vw;
+    animation: floaty 3.5s ease-in-out infinite;
+  }
+  .card .emoji { font-size: 56px; margin-bottom: 10px; display: block; }
+  h1 {
+    font-family: 'Pacifico', cursive;
+    font-weight: 400;
+    color: #e8467c;
+    font-size: clamp(28px, 6vw, 46px);
+    margin-bottom: 34px;
+    min-height: 1.4em;
+  }
+  .buttons { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; }
+  button {
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 22px;
+    padding: 14px 44px;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease, background .3s ease, color .3s ease;
+  }
+  button:hover { transform: scale(1.08); }
+  button:active { transform: scale(.96); }
+  .yes {
+    background: linear-gradient(135deg, #ff6fa3, #ff3d7f);
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(255, 61, 127, .4);
+  }
+  .no { background: #f1f1f1; color: #888; }
+
+  .shake { animation: shake .5s ease, floaty 3.5s ease-in-out .5s infinite; }
+  .pop-in { animation: popIn .45s cubic-bezier(.3,1.6,.5,1); }
+
+  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-12px) rotate(-2deg); }
+    40% { transform: translateX(12px) rotate(2deg); }
+    60% { transform: translateX(-8px); }
+    80% { transform: translateX(8px); }
+  }
+  @keyframes popIn { 0% { transform: scale(.4); } 100% { transform: scale(1); } }
+
+  /* ---------- Love screen ---------- */
+  #love {
+    background: radial-gradient(circle at 50% 40%, #ffe0ec 0%, #ffb3d1 45%, #ff86b4 100%);
+    cursor: pointer;
+    overflow: hidden;
+  }
+  #bg, #fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  #canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #fx { z-index: 5; }
+
+  .float-heart {
+    position: absolute;
+    bottom: -60px;
+    opacity: .55;
+    animation-name: rise;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+  }
+  @keyframes rise {
+    0%   { transform: translateY(0) translateX(0) rotate(0deg); }
+    50%  { transform: translateY(-60vh) translateX(var(--sway)) rotate(calc(var(--rot) / 2)); }
+    100% { transform: translateY(-125vh) translateX(0) rotate(var(--rot)); opacity: 0; }
+  }
+
+  .popup {
+    position: absolute;
+    font-family: 'Pacifico', cursive;
+    color: #fff;
+    font-size: clamp(26px, 5.5vw, 46px);
+    white-space: nowrap;
+    text-shadow: 0 0 8px #ff3d7f, 0 0 18px #ff3d7f, 0 3px 0 #e8467c;
+    transform: translate(-50%, -50%);
+    animation: popText 2.8s ease-out forwards;
+  }
+  @keyframes popText {
+    0%   { transform: translate(-50%, -50%) scale(0) rotate(-8deg); opacity: 0; }
+    14%  { transform: translate(-50%, -50%) scale(1.25) rotate(3deg); opacity: 1; }
+    24%  { transform: translate(-50%, -55%) scale(1) rotate(0deg); opacity: 1; }
+    75%  { opacity: 1; }
+    100% { transform: translate(-50%, -170%) scale(.95); opacity: 0; }
+  }
+  .burst { position: absolute; pointer-events: none; }
+
+  .hint {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: .5px;
+    text-shadow: 0 2px 8px rgba(232, 70, 124, .6);
+    animation: pulse 1.6s ease-in-out infinite;
+    transition: opacity .8s;
+    z-index: 6;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  @keyframes pulse { 0%,100% { opacity: .65; } 50% { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<!-- Question screen -->
+<section id="question" class="screen">
+  <div class="card" id="card">
+    <span class="emoji">💌</span>
+    <h1 id="title">Akarsz tudni valamit?</h1>
+    <div class="buttons">
+      <button class="yes" id="yesBtn">Igen</button>
+      <button class="no" id="noBtn">Nem</button>
+    </div>
+  </div>
+</section>
+
+<!-- Love screen -->
+<section id="love" class="screen hidden">
+  <div id="bg"></div>
+  <canvas id="canvas"></canvas>
+  <div id="fx"></div>
+  <div class="hint" id="hint">kattints bárhova 💕</div>
+</section>
+
+<script>
+(() => {
+  /* ================= Question logic ================= */
+  const title = document.getElementById('title');
+  const card = document.getElementById('card');
+  const yesBtn = document.getElementById('yesBtn');
+  const noBtn = document.getElementById('noBtn');
+  let noTurnedYes = false;
+
+  yesBtn.addEventListener('click', goLove);
+  noBtn.addEventListener('click', () => {
+    if (!noTurnedYes) {
+      noTurnedYes = true;
+      title.textContent = 'olyan nincs hogy nem 😤';
+      noBtn.textContent = 'Igen';
+      noBtn.classList.remove('no');
+      noBtn.classList.add('yes', 'pop-in');
+      card.classList.remove('shake');
+      void card.offsetWidth; // restart animation
+      card.classList.add('shake');
+    } else {
+      goLove();
+    }
+  });
+
+  /* ================= Love screen ================= */
+  const love = document.getElementById('love');
+  const bg = document.getElementById('bg');
+  const fx = document.getElementById('fx');
+  const hint = document.getElementById('hint');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  const MESSAGES = [
+    'szeretlek 💖',
+    'gyönyörű vagy ✨',
+    'legjobb barátnő vagy 🥰',
+    'imádom a nevetésed 😄',
+    'feldobod a napjaim ☀️',
+    'hiányzol 🥺',
+    'még mindig te vagy a crushom 😳💘'
+  ];
+  let bag = [];
+  let lastMsg = null;
+  function nextMessage() {
+    if (!bag.length) {
+      bag = MESSAGES.slice().sort(() => Math.random() - .5);
+      if (bag[bag.length - 1] === lastMsg) bag.unshift(bag.pop());
+    }
+    lastMsg = bag.pop();
+    return lastMsg;
+  }
+
+  let started = false;
+  function goLove() {
+    if (started) return;
+    started = true;
+    document.getElementById('question').classList.add('hidden');
+    love.classList.remove('hidden');
+    startSnakes();
+    startBgHearts();
+    setTimeout(() => showPopup(nextMessage(), W / 2, H / 2), 700);
+  }
+
+  /* ---- floating background hearts ---- */
+  const HEART_EMOJI = ['💖', '💕', '💗', '💓', '💞', '❤️', '🩷', '💘'];
+  function spawnBgHeart() {
+    const el = document.createElement('span');
+    el.className = 'float-heart';
+    el.textContent = HEART_EMOJI[Math.floor(Math.random() * HEART_EMOJI.length)];
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.fontSize = (14 + Math.random() * 30) + 'px';
+    el.style.animationDuration = (7 + Math.random() * 7) + 's';
+    el.style.setProperty('--sway', (Math.random() * 80 - 40) + 'px');
+    el.style.setProperty('--rot', (Math.random() * 120 - 60) + 'deg');
+    el.addEventListener('animationend', () => el.remove());
+    bg.appendChild(el);
+  }
+  function startBgHearts() {
+    for (let i = 0; i < 12; i++) setTimeout(spawnBgHeart, i * 150);
+    setInterval(spawnBgHeart, 420);
+  }
+
+  /* ---- click: popup text + heart burst ---- */
+  let hintHidden = false;
+  love.addEventListener('pointerdown', (e) => {
+    showPopup(nextMessage(), e.clientX, e.clientY);
+    burst(e.clientX, e.clientY);
+    if (!hintHidden) { hintHidden = true; hint.style.opacity = 0; }
+  });
+
+  function showPopup(text, x, y) {
+    const el = document.createElement('div');
+    el.className = 'popup';
+    el.textContent = text;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    fx.appendChild(el);
+    // keep it on screen
+    const w = el.offsetWidth, h = el.offsetHeight;
+    const cx = Math.min(Math.max(x, w / 2 + 10), W - w / 2 - 10);
+    const cy = Math.min(Math.max(y, h + 10), H - h / 2 - 10);
+    el.style.left = (w + 20 > W ? W / 2 : cx) + 'px';
+    el.style.top = cy + 'px';
+    el.addEventListener('animationend', () => el.remove());
+  }
+
+  function burst(x, y) {
+    const n = 10;
+    for (let i = 0; i < n; i++) {
+      const el = document.createElement('span');
+      el.className = 'burst';
+      el.textContent = HEART_EMOJI[Math.floor(Math.random() * HEART_EMOJI.length)];
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      el.style.fontSize = (12 + Math.random() * 14) + 'px';
+      fx.appendChild(el);
+      const ang = (i / n) * Math.PI * 2 + Math.random() * .4;
+      const dist = 60 + Math.random() * 70;
+      const dx = Math.cos(ang) * dist, dy = Math.sin(ang) * dist;
+      el.animate([
+        { transform: 'translate(-50%,-50%) scale(.3)', opacity: 1 },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1)`, opacity: 1, offset: .6 },
+        { transform: `translate(calc(-50% + ${dx * 1.2}px), calc(-50% + ${dy * 1.2 + 30}px)) scale(.6)`, opacity: 0 }
+      ], { duration: 1100 + Math.random() * 400, easing: 'cubic-bezier(.2,.8,.3,1)' }).onfinish = () => el.remove();
+    }
+  }
+
+  /* ================= Snakes ================= */
+  let W = innerWidth, H = innerHeight, DPR = 1;
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  const STEP = 2;          // px between history points
+  const GAP = 3;           // history points between body segments
+  const SEGS = 18;         // body segments
+  const TAIL_IDX = SEGS * GAP;
+  const HEAD_R = 7.5;
+  const SPEED = 120;       // px / second
+  const BEAM_LIFE = 5200;  // ms a beam stays visible
+
+  // [body, stripe, outline]
+  const PALETTE = [
+    ['#7fe08f', '#c4f5a8', '#3fa45a'],
+    ['#8fd3ff', '#d2efff', '#3f8fc9'],
+    ['#c9a6ff', '#ecdcff', '#8a5ad8'],
+    ['#ffd36e', '#fff0b8', '#d29a22'],
+    ['#ff9ec7', '#ffd8ea', '#d8558e'],
+    ['#8ff0dc', '#d5fff5', '#2fae95'],
+    ['#ffb38a', '#ffe1cf', '#d9733e'],
+  ];
+  const BEAMS = ['#ff2e74', '#ff5fa2', '#ff3b5c', '#e64bff', '#ff7ac0', '#ff4f8b', '#d93cff'];
+
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  function heartPt(t) {
+    const s = Math.sin(t);
+    return {
+      x: 16 * s * s * s,
+      y: -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t))
+    };
+  }
+  function heartSpeed(t) {
+    const e = 0.001, a = heartPt(t), b = heartPt(t + e);
+    return Math.hypot(b.x - a.x, b.y - a.y) / e;
+  }
+  function heartScale() {
+    const base = Math.min(W, H);
+    return clamp(base * rand(0.005, 0.0085), 2.6, 9);
+  }
+
+  const particles = [];
+
+  class Snake {
+    constructor(i) {
+      const p = PALETTE[i % PALETTE.length];
+      this.col = p[0]; this.stripe = p[1]; this.outline = p[2];
+      this.beamCol = BEAMS[i % BEAMS.length];
+      this.x = rand(40, W - 40);
+      this.y = rand(40, H - 40);
+      this.angle = rand(0, Math.PI * 2);
+      this.wig = rand(0, 10);
+      this.acc = 0;
+      this.hist = [];
+      for (let k = TAIL_IDX + 4; k >= 0; k--) {
+        this.hist.push({ x: this.x - Math.cos(this.angle) * k * STEP, y: this.y - Math.sin(this.angle) * k * STEP, d: false });
+      }
+      this.beam = [];
+      this.state = 'travel';
+      this.tongueSeed = rand(0, 100);
+      this.pickTarget();
+    }
+
+    pickTarget() {
+      this.s = heartScale();
+      const mx = this.s * 16 + 15;
+      const top = this.s * 13 + 15, bottom = this.s * 17 + 15;
+      this.cx = mx + Math.random() * Math.max(1, W - 2 * mx);
+      this.cy = top + Math.random() * Math.max(1, H - top - bottom);
+      this.tx = this.cx;
+      this.ty = this.cy - 5 * this.s; // heart starts at its top dip
+      this.dir = Math.random() < .5 ? 1 : -1;
+    }
+
+    stepOnce(now) {
+      if (this.state === 'travel') {
+        const dx = this.tx - this.x, dy = this.ty - this.y;
+        const dist = Math.hypot(dx, dy);
+        let diff = Math.atan2(dy, dx) - this.angle;
+        diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+        const turn = dist < 70 ? 0.4 : 0.07;
+        this.angle += clamp(diff, -turn, turn);
+        this.wig += 0.09;
+        const a = this.angle + (dist > 50 ? Math.sin(this.wig) * 0.55 : 0);
+        this.x += Math.cos(a) * STEP;
+        this.y += Math.sin(a) * STEP;
+        if (dist < 10) {
+          this.x = this.tx; this.y = this.ty;
+          this.state = 'draw';
+          this.t = 0;
+        }
+        this.hist.push({ x: this.x, y: this.y, d: false });
+      } else {
+        const v = heartSpeed(this.t) * this.s;
+        this.t += Math.min(STEP / Math.max(v, 0.5), 0.08);
+        const p = heartPt(this.t * this.dir);
+        const nx = this.cx + p.x * this.s, ny = this.cy + p.y * this.s;
+        this.angle = Math.atan2(ny - this.y, nx - this.x);
+        this.x = nx; this.y = ny;
+        this.hist.push({ x: this.x, y: this.y, d: true });
+        if (this.t >= Math.PI * 2) {
+          this.state = 'travel';
+          this.pickTarget();
+        }
+      }
+
+      if (this.hist.length > TAIL_IDX + 5) this.hist.shift();
+
+      // The beam comes out of the tail: emit where the tail currently is
+      const tail = this.hist[this.hist.length - 1 - TAIL_IDX];
+      if (tail && tail.d) {
+        this.beam.push({ x: tail.x, y: tail.y, b: now });
+        if (Math.random() < 0.35) {
+          particles.push({
+            x: tail.x, y: tail.y,
+            vx: rand(-30, 30), vy: rand(-40, 10),
+            life: 0, max: rand(500, 1000),
+            r: rand(1, 2.6), col: Math.random() < .5 ? '#fff' : this.beamCol
+          });
+        }
+      }
+    }
+
+    drawBeam(now) {
+      const b = this.beam;
+      while (b.length && now - b[0].b > BEAM_LIFE) b.shift();
+      if (b.length < 2) return;
+      const CH = 8;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      for (let i = 1; i < b.length; i += CH) {
+        const end = Math.min(i + CH, b.length);
+        const a = clamp(1 - (now - b[i].b) / BEAM_LIFE, 0, 1);
+        ctx.beginPath();
+        ctx.moveTo(b[i - 1].x, b[i - 1].y);
+        for (let j = i; j < end; j++) {
+          if (Math.abs(b[j].x - b[j - 1].x) + Math.abs(b[j].y - b[j - 1].y) > 10) ctx.moveTo(b[j].x, b[j].y);
+          else ctx.lineTo(b[j].x, b[j].y);
+        }
+        ctx.strokeStyle = this.beamCol;
+        ctx.globalAlpha = a * 0.22; ctx.lineWidth = 12; ctx.stroke();
+        ctx.globalAlpha = a * 0.55; ctx.lineWidth = 6; ctx.stroke();
+        ctx.strokeStyle = '#fff';
+        ctx.globalAlpha = a * 0.95; ctx.lineWidth = 2.2; ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    draw(now) {
+      const h = this.hist, n = h.length - 1;
+
+      // body (outline pass, then color pass), tail -> head
+      for (let pass = 0; pass < 2; pass++) {
+        for (let i = SEGS; i >= 1; i--) {
+          const p = h[n - i * GAP];
+          if (!p) continue;
+          const f = i / SEGS;
+          const r = 2 + (HEAD_R - 2) * Math.pow(1 - f, 0.7) * 0.85;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, pass === 0 ? r + 1.4 : r, 0, Math.PI * 2);
+          ctx.fillStyle = pass === 0 ? this.outline : (i % 3 === 0 ? this.stripe : this.col);
+          ctx.fill();
+        }
+      }
+
+      // glowing tail tip while drawing
+      const tail = h[n - TAIL_IDX];
+      if (tail && tail.d) {
+        ctx.beginPath();
+        ctx.arc(tail.x, tail.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.shadowColor = this.beamCol;
+        ctx.shadowBlur = 14;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      // head
+      const hp = h[n], prev = h[n - 3] || h[0];
+      const ang = Math.atan2(hp.y - prev.y, hp.x - prev.x);
+      const r = HEAD_R;
+      ctx.save();
+      ctx.translate(hp.x, hp.y);
+      ctx.rotate(ang);
+
+      // tongue flick
+      const flick = Math.sin(now / 160 + this.tongueSeed);
+      if (flick > 0.55) {
+        const len = r * 0.9 * (flick - 0.55) / 0.45 + r * 0.4;
+        ctx.strokeStyle = '#ff3b6b';
+        ctx.lineWidth = 1.6;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(r * 0.9, 0);
+        ctx.lineTo(r * 0.9 + len, 0);
+        ctx.lineTo(r * 0.9 + len + 3, -2.5);
+        ctx.moveTo(r * 0.9 + len, 0);
+        ctx.lineTo(r * 0.9 + len + 3, 2.5);
+        ctx.stroke();
+      }
+
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r * 1.25 + 1.4, r + 1.4, 0, 0, Math.PI * 2);
+      ctx.fillStyle = this.outline; ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r * 1.25, r, 0, 0, Math.PI * 2);
+      ctx.fillStyle = this.col; ctx.fill();
+
+      // blush
+      ctx.fillStyle = 'rgba(255,110,160,.65)';
+      for (const s of [-1, 1]) {
+        ctx.beginPath();
+        ctx.ellipse(r * 0.05, s * r * 0.72, r * 0.28, r * 0.17, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // eyes
+      for (const s of [-1, 1]) {
+        ctx.beginPath();
+        ctx.arc(r * 0.45, s * r * 0.42, r * 0.36, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.beginPath();
+        ctx.arc(r * 0.55, s * r * 0.42, r * 0.22, 0, Math.PI * 2);
+        ctx.fillStyle = '#2b1b2e'; ctx.fill();
+        ctx.beginPath();
+        ctx.arc(r * 0.6, s * r * 0.42 - r * 0.08, r * 0.08, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff'; ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  let snakes = [];
+  let last = 0;
+
+  function startSnakes() {
+    resize();
+    const count = clamp(Math.round((W * H) / 120000), 4, 9);
+    snakes = Array.from({ length: count }, (_, i) => new Snake(i));
+    requestAnimationFrame(loop);
+  }
+
+  function loop(ts) {
+    const dt = Math.min(50, last ? ts - last : 16);
+    last = ts;
+    ctx.clearRect(0, 0, W, H);
+
+    for (const s of snakes) {
+      s.acc += SPEED * dt / 1000;
+      while (s.acc >= STEP) { s.acc -= STEP; s.stepOnce(ts); }
+    }
+
+    for (const s of snakes) s.drawBeam(ts);
+
+    // sparkles
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.life += dt;
+      if (p.life >= p.max) { particles.splice(i, 1); continue; }
+      p.x += p.vx * dt / 1000;
+      p.y += p.vy * dt / 1000;
+      ctx.globalAlpha = 1 - p.life / p.max;
+      ctx.fillStyle = p.col;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    for (const s of snakes) s.draw(ts);
+
+    requestAnimationFrame(loop);
+  }
+})();
+</script>
+</body>
+</html>
